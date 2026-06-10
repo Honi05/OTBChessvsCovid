@@ -161,3 +161,56 @@ knitr::kable(lm_summary)
 Compare the period coefficients here to the raw chi-squared/ANOVA
 differences — do they survive controlling for age and title composition?
 :::
+
+## The Twist: Rating Inflation, 2015 vs 2026
+
+```{r}
+#| label: inflation
+#| fig-width: 8
+#| fig-height: 4.5
+
+inflation_data <- players %>% filter(snapshot %in% c("2015-02", "2026-06"))
+inflation_summary <- inflation_data %>%
+  group_by(snapshot) %>%
+  summarise(n = n(), mean_rtg = mean(rating), sd_rtg = sd(rating), .groups = "drop")
+sd_ratio <- max(inflation_summary$sd_rtg) / min(inflation_summary$sd_rtg)
+t_result <- t.test(rating ~ snapshot, data = inflation_data, var.equal = (sd_ratio < 1.2))
+
+ggplot(inflation_data, aes(rating, fill = snapshot)) +
+  geom_histogram(alpha = 0.5, binwidth = 25, position = "identity") +
+  scale_fill_manual(values = c("2015-02" = "#5b9fff", "2026-06" = "#f0c040")) +
+  labs(x = "Rating", y = "Number of players", fill = NULL) +
+  theme_minimal(base_size = 16)
+```
+
+Mean rating: 2015 = `r round(inflation_summary$mean_rtg[inflation_summary$snapshot=="2015-02"], 1)`,
+2026 = `r round(inflation_summary$mean_rtg[inflation_summary$snapshot=="2026-06"], 1)`
+(`r ifelse(sd_ratio < 1.2, "pooled-variance", "Welch")` t-test,
+p `r format.pval(t_result$p.value, eps = .001)`)
+
+::: {.notes}
+Ties back to the main story: if participation recovered/grew, did the
+rating pool itself shift (younger/newer player influx, FIDE rating-floor
+policy changes)?
+:::
+
+## Conclusion
+
+- Participation rate dropped sharply during COVID (32.1% -> 3.9%) and
+  **only partially recovered** by 2026 (24.7%) — still ~7 points below
+  the Pre-COVID level
+- Effect sizes (Cramer's V = 0.29, eta-squared = 0.07) are **moderate**
+  despite very small p-values — large N inflates significance
+- The period pattern **holds** after controlling for age and title
+  composition (Post-COVID coefficient -0.073 vs. raw Tukey diff -0.071 —
+  essentially unchanged)
+- Bonus: the rating pool shows **lower** mean ratings in 2026 vs 2015
+  (1736.9 vs 1799.3) — likely diluted by the influx of new, lower-rated
+  players (active pool nearly doubled, 115.5K -> 217.5K)
+
+::: {.notes}
+Caveat: the same player ID can appear across multiple snapshots, which
+violates the independence assumption for chi-squared/ANOVA/regression.
+This is standard for repeated cross-sections of administrative data and is
+acknowledged here rather than corrected with out-of-scope panel methods.
+:::
