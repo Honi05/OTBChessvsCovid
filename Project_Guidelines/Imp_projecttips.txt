@@ -1,0 +1,40 @@
+
+⌛ Tips from those who came before
+(The following goes as per the academic year 2023/24. He might change his exam structure in the future) 
+
+For Quattrociocchi you have to make a project and then give a presentation. From the observations we made we can give you the following (completely subjective) tips:
+
+
+
+For each presentation, you have 7 minutes. In case you run out of time he will cut you off. This might happen even if he thinks he has seen enough. If he cuts you off, this does not mean your grade is bad, so don’t panic.
+
+Imp to stay within the course!!! Claude note, use class notes to scrap topics and build the project
+
+
+
+We recommend you:
+
+having a timer on your phone so that you can see how much time is remaining (and speed up or slow down if needed);
+
+to try the presentation at least a couple times before so that you can understand the time needed for each member component.
+
+
+
+Don’t try to make your own database unless your analysis wants to focus on a topic for which the dataset does not exist. However, it’s better if you don’t mention the source of your dataset (i.e. don’t say “we got it from Kaggle“ or “we got it from GDelt“).
+
+
+
+Put effort in your presentation, both visually-wise and content-wise. After all, “anche l’occhio vuole la sua parte” (Lit: “also the eye wants its part“, italian saying meaning that visually impactful things have their… impact).
+
+
+
+Hard topics such as Sentiment Analysis should be avoided unless you’re very confident about your work. Since that’s his field of work, if you say something wrong he will notice right away. This doesn’t mean that you should never use it, but there is no need to go too much into details. After all, it’s a 7 minutes presentation.
+
+
+
+If you do something that he hasn’t covered in class, he will ask you to explain how you did it. So study carefully what you did, and get ready to answer potential questions.
+
+
+
+Remember to be original: this is a very important thing because that’s an evaluation point, and he cares a lot about that. For instance, projects over films, books, music and so on are very frequent topics. Try to get inspired by something that you like. The more the project is original, the more he will listen to you.
+
