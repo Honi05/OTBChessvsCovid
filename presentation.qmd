@@ -89,3 +89,75 @@ ggplot(participation, aes(ref_month, pct_played)) +
   labs(x = "Reference month", y = "% of active players who played >=1 rated game") +
   theme_minimal(base_size = 16)
 ```
+
+## Did Participation Recover? (Chi-Squared Test)
+
+```{r}
+#| label: chisq
+
+contingency <- table(period_data$period, period_data$played)
+contingency_pct <- round(100 * prop.table(contingency, margin = 1), 1)
+chisq_result <- chisq.test(contingency)
+cramers_v <- sqrt(unname(chisq_result$statistic) / sum(contingency))
+```
+
+`period (3 levels) x played (yes/no)`, all active players in the 6
+Pre/COVID/Post-COVID snapshots:
+
+- Pre-COVID: `r contingency_pct["Pre-COVID","TRUE"]`% played
+- COVID: `r contingency_pct["COVID","TRUE"]`% played
+- Post-COVID: `r contingency_pct["Post-COVID","TRUE"]`% played
+
+chi-squared(`r unname(chisq_result$parameter)`) = `r format(round(unname(chisq_result$statistic), 1), big.mark = ",", scientific = FALSE)`,
+p `r format.pval(chisq_result$p.value, eps = .001)`, Cramer's V = `r round(cramers_v, 3)`
+
+::: {.notes}
+With N in the millions, p-values are essentially always significant —
+Cramer's V and the raw percentages are the figures that matter.
+:::
+
+## Games-Played Intensity by Period (ANOVA + Tukey)
+
+```{r}
+#| label: anova
+
+aov_fit <- aov(log_games ~ period, data = period_data)
+aov_table <- summary(aov_fit)[[1]]
+eta_sq <- aov_table["period", "Sum Sq"] / sum(aov_table[["Sum Sq"]])
+tukey_df <- as.data.frame(TukeyHSD(aov_fit)$period)
+```
+
+DV: `log1p(games)` (log-transformed — `games` is heavily right-skewed and
+zero-inflated).
+
+- F(`r aov_table["period","Df"]`, `r format(aov_table["Residuals","Df"], big.mark = ",", scientific = FALSE)`) = `r format(round(aov_table["period","F value"], 1), big.mark = ",", scientific = FALSE)`,
+  p `r format.pval(aov_table["period","Pr(>F)"], eps = .001)`
+- eta-squared = `r round(eta_sq, 4)`
+- Tukey HSD, **Post-COVID vs Pre-COVID**: diff (log scale) =
+  `r round(tukey_df["Post-COVID-Pre-COVID","diff"], 3)`,
+  p `r format.pval(tukey_df["Post-COVID-Pre-COVID","p adj"], eps = .001)`
+
+## Controlling for Age & Title (Regression)
+
+```{r}
+#| label: regression
+
+reg_data <- period_data %>% filter(!is.na(age))
+lm_fit <- lm(log_games ~ period + age + title_has, data = reg_data)
+lm_summary <- broom::tidy(lm_fit) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4)))
+r2 <- summary(lm_fit)$r.squared
+```
+
+`log1p(games) ~ period + age + title_has`, n =
+`r format(nobs(lm_fit), big.mark = ",")`, R-squared = `r round(r2, 3)`
+
+```{r}
+#| label: regression-table
+knitr::kable(lm_summary)
+```
+
+::: {.notes}
+Compare the period coefficients here to the raw chi-squared/ANOVA
+differences — do they survive controlling for age and title composition?
+:::
