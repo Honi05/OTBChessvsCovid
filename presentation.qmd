@@ -145,7 +145,12 @@ zero-inflated).
 reg_data <- period_data %>% filter(!is.na(age))
 lm_fit <- lm(log_games ~ period + age + title_has, data = reg_data)
 lm_summary <- broom::tidy(lm_fit) %>%
-  mutate(across(where(is.numeric), ~round(.x, 4)))
+  mutate(
+    estimate = round(estimate, 4),
+    std.error = signif(std.error, 3),
+    statistic = round(statistic, 1),
+    p.value = format.pval(p.value, eps = .001, digits = 3)
+  )
 r2 <- summary(lm_fit)$r.squared
 ```
 
