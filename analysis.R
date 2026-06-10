@@ -87,3 +87,27 @@ ggplot(aug_aov, aes(sample = .resid)) +
   stat_qq_line(color = "red") +
   labs(title = "ANOVA residual Q-Q plot") +
   theme_minimal()
+
+# ── 5.4 Multiple regression: log1p(games) ~ period + age + title_has ────
+
+reg_data <- period_data %>% filter(!is.na(age))
+cat("Rows used:", nrow(reg_data), "of", nrow(period_data),
+    "(", round(100 * nrow(reg_data) / nrow(period_data), 1), "% )\n")
+
+lm_fit <- lm(log_games ~ period + age + title_has, data = reg_data)
+print(summary(lm_fit))
+
+# Residual diagnostics (sampled for plotting speed)
+aug_lm <- broom::augment(lm_fit) %>% slice_sample(n = 20000)
+
+ggplot(aug_lm, aes(.fitted, .resid)) +
+  geom_point(alpha = 0.1) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Regression residuals vs fitted", x = "Fitted", y = "Residual") +
+  theme_minimal()
+
+ggplot(aug_lm, aes(sample = .resid)) +
+  stat_qq(alpha = 0.1) +
+  stat_qq_line(color = "red") +
+  labs(title = "Regression residual Q-Q plot") +
+  theme_minimal()
