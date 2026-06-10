@@ -19,10 +19,12 @@ SNAPSHOT_INFO <- tribble(
 )
 
 # Filter to active rated players (FIDE convention: rating > 0, not flagged
-# inactive) and bucket the title column to the tracked FIDE titles.
+# inactive -- the flag column may hold combined codes like "wi" for
+# "woman + inactive", so we exclude any flag containing "i") and bucket
+# the title column to the tracked FIDE titles.
 clean_players <- function(df) {
   df %>%
-    filter(rating > 0, flag != "i") %>%
+    filter(rating > 0, !grepl("i", flag, fixed = TRUE)) %>%
     mutate(title = if_else(title %in% TITLE_LEVELS, title, "none"))
 }
 
