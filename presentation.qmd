@@ -48,3 +48,44 @@ covid_window <- as.Date(c("2020-03-01", "2021-12-31"))
 | 2021-01 | Dec 2020 | COVID |
 | 2022-01 | Dec 2021 | Post-COVID |
 | 2026-06 | May 2026 | Post-COVID |
+
+## Active Players Over Time
+
+```{r}
+#| label: active-plot
+#| fig-width: 9
+#| fig-height: 5
+
+active_counts <- players %>%
+  count(snapshot, ref_month, name = "active_players") %>%
+  arrange(ref_month)
+
+ggplot(active_counts, aes(ref_month, active_players)) +
+  annotate("rect", xmin = covid_window[1], xmax = covid_window[2],
+           ymin = -Inf, ymax = Inf, fill = "grey85") +
+  geom_line(color = "#5b9fff", linewidth = 1.2) +
+  geom_point(color = "#f0c040", size = 3) +
+  labs(x = "Reference month (games played in)", y = "Active players") +
+  theme_minimal(base_size = 16)
+```
+
+## Did Players Keep Playing? (Participation Rate)
+
+```{r}
+#| label: participation-plot
+#| fig-width: 9
+#| fig-height: 5
+
+participation <- players %>%
+  group_by(snapshot, ref_month) %>%
+  summarise(pct_played = 100 * mean(played), .groups = "drop") %>%
+  arrange(ref_month)
+
+ggplot(participation, aes(ref_month, pct_played)) +
+  annotate("rect", xmin = covid_window[1], xmax = covid_window[2],
+           ymin = -Inf, ymax = Inf, fill = "grey85") +
+  geom_line(color = "#51cf66", linewidth = 1.2) +
+  geom_point(color = "#f0c040", size = 3) +
+  labs(x = "Reference month", y = "% of active players who played >=1 rated game") +
+  theme_minimal(base_size = 16)
+```
