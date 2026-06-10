@@ -60,3 +60,30 @@ print(chisq_result)
 n_total <- sum(contingency)
 cramers_v <- sqrt(unname(chisq_result$statistic) / n_total)
 cat("Cramer's V:", round(cramers_v, 4), "\n")
+
+# ── 5.3 ANOVA: log1p(games) by period ────────────────────────────────────
+
+aov_fit <- aov(log_games ~ period, data = period_data)
+print(summary(aov_fit))
+
+aov_table <- summary(aov_fit)[[1]]
+eta_sq <- aov_table["period", "Sum Sq"] / sum(aov_table[["Sum Sq"]])
+cat("Eta-squared:", round(eta_sq, 4), "\n")
+
+tukey_result <- TukeyHSD(aov_fit)
+print(tukey_result)
+
+# Residual diagnostics (sample for plotting speed with millions of rows)
+aug_aov <- broom::augment(aov_fit) %>% slice_sample(n = 20000)
+
+ggplot(aug_aov, aes(.fitted, .resid)) +
+  geom_jitter(alpha = 0.1, width = 0.05) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "ANOVA residuals vs fitted", x = "Fitted", y = "Residual") +
+  theme_minimal()
+
+ggplot(aug_aov, aes(sample = .resid)) +
+  stat_qq(alpha = 0.1) +
+  stat_qq_line(color = "red") +
+  labs(title = "ANOVA residual Q-Q plot") +
+  theme_minimal()
