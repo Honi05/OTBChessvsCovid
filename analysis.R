@@ -45,3 +45,18 @@ p_participation <- ggplot(participation, aes(ref_month, pct_played)) +
 
 p_active
 p_participation
+
+# ── 5.2 Chi-squared test: participation by period ────────────────────────
+
+contingency <- table(period_data$period, period_data$played)
+print(contingency)
+
+contingency_pct <- round(100 * prop.table(contingency, margin = 1), 1)
+print(contingency_pct)
+
+chisq_result <- chisq.test(contingency)
+print(chisq_result)
+
+n_total <- sum(contingency)
+cramers_v <- sqrt(unname(chisq_result$statistic) / n_total)
+cat("Cramer's V:", round(cramers_v, 4), "\n")
