@@ -1,0 +1,50 @@
+---
+title: "Did OTB (Over the Board) Chess Recover After COVID-19?"
+subtitle: "Evidence from FIDE Standard rating lists, 2015-2026"
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(broom)
+
+players <- readRDS("data/processed/players.rds")
+period_data <- players %>%
+  filter(!is.na(period)) %>%
+  mutate(log_games = log1p(games))
+covid_window <- as.Date(c("2020-03-01", "2021-12-31"))
+```
+
+## The Question
+
+**Did over-the-board (OTB) competitive chess fully recover after COVID-19?**
+
+- Online chess boomed during COVID (Queen's Gambit, Lichess/chess.com surge)
+- FIDE Standard ratings reflect **OTB tournament games only**
+- Did the real-world tournament ecosystem bounce back — or stay smaller?
+
+## The Dataset
+
+- **FIDE Standard rating lists** — 7 monthly snapshots, 2015-2026
+- Each snapshot's `games` field = rated OTB games played **in the prior
+  month**
+- Active rated player = `rating > 0` and not flagged inactive
+
+| Snapshot | Games reflect | Period |
+|---|---|---|
+| 2015-02 | Jan 2015 | (inflation only) |
+| 2019-01 | Dec 2018 | Pre-COVID |
+| 2020-01 | Dec 2019 | Pre-COVID |
+| 2020-07 | Jun 2020 | COVID |
+| 2021-01 | Dec 2020 | COVID |
+| 2022-01 | Dec 2021 | Post-COVID |
+| 2026-06 | May 2026 | Post-COVID |
