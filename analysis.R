@@ -1,6 +1,8 @@
 library(tidyverse)
 library(broom)
 
+source("R/clustering.R")
+
 players <- readRDS("data/processed/players.rds")
 
 # Subset used for the Pre-COVID / COVID / Post-COVID recovery analyses
@@ -142,3 +144,98 @@ ggplot(inflation_data, aes(rating, fill = snapshot)) +
     x = "Rating", y = "Number of players", fill = "Snapshot"
   ) +
   theme_minimal()
+
+# ── 5.6 Player segmentation via k-means ──────────────────────────────────
+
+cluster_data <- period_data %>% filter(!is.na(age))
+cat("Rows used for clustering:", nrow(cluster_data), "of", nrow(period_data),
+    "(", round(100 * nrow(cluster_data) / nrow(period_data), 1), "% )\n")
+
+cluster_features <- cluster_data %>%
+  select(rating, log_games, age) %>%
+  as.matrix() %>%
+  scale()
+
+feature_center <- attr(cluster_features, "scaled:center")
+feature_scale  <- attr(cluster_features, "scaled:scale")
+
+# Elbow plot: total within-cluster SS for k = 1..10, on a 50k-row sample
+# for speed (full data is ~1M rows).
+set.seed(42)
+elbow_sample <- cluster_features[sample(nrow(cluster_features), 50000), ]
+elbow_df <- tibble(
+  k   = 1:10,
+  wss = map_dbl(1:10, function(k) {
+    kmeans(elbow_sample, centers = k, nstart = 10, iter.max = 100,
+           algorithm = "Lloyd")$tot.withinss
+  })
+)
+print(elbow_df)
+
+ggplot(elbow_df, aes(k, wss)) +
+  geom_line(color = "#5b9fff", linewidth = 1.2) +
+  geom_point(color = "#f0c040", size = 3) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = "K-means elbow plot (50k-row sample)",
+       x = "Number of clusters (k)", y = "Total within-cluster SS") +
+  theme_minimal()
+
+# Final fit: k = 4, on the full pooled (standardized) feature matrix --
+# one shared centroid set used for every period.
+set.seed(42)
+km_fit <- kmeans(cluster_features, centers = 4, nstart = 25, iter.max = 100,
+                  algorithm = "Lloyd")
+
+# Relabel clusters 1-4 by ascending centroid rating, so cluster numbering
+# is stable and interpretable regardless of kmeans' arbitrary initial order.
+cluster_rank <- cluster_rank_by_rating(
+  centers       = km_fit$centers,
+  rating_col    = "rating",
+  rating_center = feature_center["rating"],
+  rating_scale  = feature_scale["rating"]
+)
+cluster_data$cluster <- factor(cluster_rank[km_fit$cluster], levels = 1:4)
+
+# Cluster profile: what does each segment look like in original units?
+cluster_profile <- cluster_data %>%
+  group_by(cluster) %>%
+  summarise(
+    n           = n(),
+    mean_rating = mean(rating),
+    mean_games  = mean(games),
+    mean_age    = mean(age),
+    pct_titled  = 100 * mean(title_has),
+    .groups = "drop"
+  ) %>%
+  mutate(pct_of_pool = 100 * n / sum(n))
+print(cluster_profile)
+
+# Cluster share by period -- comparable across periods because the
+# standardization and centroids above were fit once on the pooled data.
+cluster_shares <- cluster_data %>%
+  count(period, cluster, name = "n") %>%
+  group_by(period) %>%
+  mutate(pct = 100 * n / sum(n)) %>%
+  ungroup()
+print(cluster_shares)
+
+ggplot(cluster_shares, aes(period, pct, fill = cluster)) +
+  geom_col(position = "dodge") +
+  labs(title = "Player segment share by period",
+       x = "Period", y = "% of active players", fill = "Cluster") +
+  theme_minimal()
+
+# Chi-squared test: is cluster membership independent of period?
+cluster_contingency <- table(cluster_data$period, cluster_data$cluster)
+print(cluster_contingency)
+
+cluster_contingency_pct <- round(100 * prop.table(cluster_contingency, margin = 1), 1)
+print(cluster_contingency_pct)
+
+cluster_chisq <- chisq.test(cluster_contingency)
+print(cluster_chisq)
+
+cluster_n  <- sum(cluster_contingency)
+cluster_df <- min(dim(cluster_contingency)) - 1
+cluster_cramers_v <- sqrt(unname(cluster_chisq$statistic) / (cluster_n * cluster_df))
+cat("Cramer's V (period x cluster):", round(cluster_cramers_v, 4), "\n")
