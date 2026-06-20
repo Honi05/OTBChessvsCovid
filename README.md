@@ -1,8 +1,9 @@
 # COVID-19 Effects on Slow Thinking Chess
 
-**Did participation in classical over-the-board chess decline following lockdown — and did it ever recover?**
+**Did participation in classical over-the-board chess decline following lockdown and online chess boom?**
 
-**Author:** Honi Arora · FIDE Master · ID 2162860
+**Author:** Honi Arora
+
 **Course:** Data Management and Analysis (Unit 2) — Sapienza University of Rome
 
 ---
@@ -15,22 +16,22 @@ Chess.com grew from 30 million to 150 million users between 2020 and 2023. Fast 
 
 ## Data
 
-Seven official FIDE Standard Rating List snapshots (fixed-width `.txt` files):
+Seven official FIDE Standard Rating Lists (fixed-width `.txt` files):
 
-| Snapshot | Period | Role |
-|---|---|---|
-| Feb 2015 | — | Long-run baseline |
-| Jan 2019 | Pre-COVID | |
-| Jan 2020 | Pre-COVID | |
-| Jul 2020 | COVID | |
-| Jan 2021 | COVID | |
-| Jan 2022 | Post-COVID | |
-| Jun 2026 | Post-COVID | |
+| Snapshot | Period | 
+|---|---|
+| Feb 2015 | Long-run baseline |  
+| Jan 2019 | Pre-COVID | 
+| Jan 2020 | Pre-COVID | 
+| Jul 2020 | COVID | 
+| Jan 2021 | COVID | 
+| Jan 2022 | Post-COVID | 
+| Jun 2026 | Post-COVID | 
 
 **Raw records:** 2,534,904 across all 7 lists
 **After cleaning** (removed inactive players — zero tournament games in 12+ months): **1,166,786 records × 15 variables**
 
-Raw data available on [Kaggle](https://www.kaggle.com/datasets/honiarora/fide-chess-covid-recovery).
+Data available on [Kaggle](https://www.kaggle.com/datasets/honiarora/fide-chess-covid-recovery).
 
 ---
 
@@ -95,7 +96,7 @@ R/
 data/
   standard_*frl/         # Raw FIDE rating list snapshots (gitignored)
   processed/             # players.rds cache (gitignored)
-DMA2_Presentation (1).pptx
+DMA2_Presentation .pptx
 ```
 
 ## How to Run
