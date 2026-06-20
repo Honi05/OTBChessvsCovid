@@ -9,3 +9,5 @@ data/processed/
 *_cache/
 presentation.html
 .worktrees/
+docs/
+tests/
