@@ -11,3 +11,4 @@ presentation.html
 .worktrees/
 docs/
 tests/
+.mcp.json
