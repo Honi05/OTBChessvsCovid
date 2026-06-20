@@ -114,31 +114,37 @@ ggplot(aug_lm, aes(sample = .resid)) +
   labs(title = "Regression residual Q-Q plot") +
   theme_minimal()
 
-# ── 5.5 Inflation: rating distribution, 2015-02 vs 2026-06 ───────────────
+# ── 5.5 Rating probability distribution: 2015-02 vs 2026-06 ─────────────
 
-inflation_data <- players %>% filter(snapshot %in% c("2015-02", "2026-06"))
+rating_comp <- players %>% filter(snapshot %in% c("2015-02", "2026-06"))
 
-inflation_summary <- inflation_data %>%
+rating_comp_summary <- rating_comp %>%
   group_by(snapshot) %>%
   summarise(n = n(), mean_rtg = mean(rating), sd_rtg = sd(rating), .groups = "drop")
-print(inflation_summary)
+print(rating_comp_summary)
 
 # Compare SDs to choose pooled (var.equal=TRUE) vs Welch's t-test.
 # Ratio < 1.2 is treated as "close enough" to equal variance for the
-# pooled formula; otherwise Welch's correction is used. Whichever is
-# chosen is stated explicitly in the deck.
-sd_ratio <- max(inflation_summary$sd_rtg) / min(inflation_summary$sd_rtg)
+# pooled formula; otherwise Welch's correction is used.
+sd_ratio <- max(rating_comp_summary$sd_rtg) / min(rating_comp_summary$sd_rtg)
 cat("SD ratio:", round(sd_ratio, 3), "\n")
 
 use_pooled <- sd_ratio < 1.2
 cat("Using", if (use_pooled) "pooled-variance" else "Welch's", "t-test\n")
 
-t_result <- t.test(rating ~ snapshot, data = inflation_data, var.equal = use_pooled)
+t_result <- t.test(rating ~ snapshot, data = rating_comp, var.equal = use_pooled)
 print(t_result)
 
-ggplot(inflation_data, aes(rating, fill = snapshot)) +
+ggplot(rating_comp, aes(rating, fill = snapshot)) +
   geom_histogram(alpha = 0.5, binwidth = 25, position = "identity") +
+  geom_vline(data = rating_comp_summary,
+             aes(xintercept = mean_rtg, color = snapshot),
+             linetype = "dashed", linewidth = 1) +
   scale_fill_manual(values = c("2015-02" = "#5b9fff", "2026-06" = "#f0c040")) +
+  scale_color_manual(values = c("2015-02" = "#1a6fd4", "2026-06" = "#c89a00"), guide = "none") +
+  geom_text(data = rating_comp_summary,
+            aes(x = mean_rtg, y = Inf, label = paste0("μ=", round(mean_rtg)), color = snapshot),
+            vjust = 1.5, hjust = -0.1, size = 3.5, fontface = "bold") +
   labs(
     title = "FIDE Standard rating distribution: Feb 2015 vs Jun 2026",
     x = "Rating", y = "Number of players", fill = "Snapshot"
