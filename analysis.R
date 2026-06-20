@@ -1,12 +1,11 @@
 library(tidyverse)
-library(broom)
 
 source("R/clustering.R")
 
 players <- readRDS("data/processed/players.rds")
 
 # Subset used for the Pre-COVID / COVID / Post-COVID recovery analyses
-# (excludes 2015-02, which is reserved for the inflation comparison)
+# (excludes 2015-02, which is reserved for the rating distribution comparison)
 period_data <- players %>%
   filter(!is.na(period)) %>%
   mutate(log_games = log1p(games))
@@ -48,73 +47,7 @@ p_participation <- ggplot(participation, aes(ref_month, pct_played)) +
 p_active
 p_participation
 
-# ── 5.2 Chi-squared test: participation by period ────────────────────────
-
-contingency <- table(period_data$period, period_data$played)
-print(contingency)
-
-contingency_pct <- round(100 * prop.table(contingency, margin = 1), 1)
-print(contingency_pct)
-
-chisq_result <- chisq.test(contingency)
-print(chisq_result)
-
-n_total <- sum(contingency)
-cramers_v <- sqrt(unname(chisq_result$statistic) / n_total)
-cat("Cramer's V:", round(cramers_v, 4), "\n")
-
-# ── 5.3 ANOVA: log1p(games) by period ────────────────────────────────────
-
-aov_fit <- aov(log_games ~ period, data = period_data)
-print(summary(aov_fit))
-
-aov_table <- summary(aov_fit)[[1]]
-eta_sq <- aov_table["period", "Sum Sq"] / sum(aov_table[["Sum Sq"]])
-cat("Eta-squared:", round(eta_sq, 4), "\n")
-
-tukey_result <- TukeyHSD(aov_fit)
-print(tukey_result)
-
-# Residual diagnostics (sample for plotting speed with millions of rows)
-aug_aov <- broom::augment(aov_fit) %>% slice_sample(n = 20000)
-
-ggplot(aug_aov, aes(.fitted, .resid)) +
-  geom_jitter(alpha = 0.1, width = 0.05) +
-  geom_hline(yintercept = 0, color = "red") +
-  labs(title = "ANOVA residuals vs fitted", x = "Fitted", y = "Residual") +
-  theme_minimal()
-
-ggplot(aug_aov, aes(sample = .resid)) +
-  stat_qq(alpha = 0.1) +
-  stat_qq_line(color = "red") +
-  labs(title = "ANOVA residual Q-Q plot") +
-  theme_minimal()
-
-# ── 5.4 Multiple regression: log1p(games) ~ period + age + title_has ────
-
-reg_data <- period_data %>% filter(!is.na(age))
-cat("Rows used:", nrow(reg_data), "of", nrow(period_data),
-    "(", round(100 * nrow(reg_data) / nrow(period_data), 1), "% )\n")
-
-lm_fit <- lm(log_games ~ period + age + title_has, data = reg_data)
-print(summary(lm_fit))
-
-# Residual diagnostics (sampled for plotting speed)
-aug_lm <- broom::augment(lm_fit) %>% slice_sample(n = 20000)
-
-ggplot(aug_lm, aes(.fitted, .resid)) +
-  geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 0, color = "red") +
-  labs(title = "Regression residuals vs fitted", x = "Fitted", y = "Residual") +
-  theme_minimal()
-
-ggplot(aug_lm, aes(sample = .resid)) +
-  stat_qq(alpha = 0.1) +
-  stat_qq_line(color = "red") +
-  labs(title = "Regression residual Q-Q plot") +
-  theme_minimal()
-
-# ── 5.5 Rating probability distribution: 2015-02 vs 2026-06 ─────────────
+# ── 5.2 Rating probability distribution: 2015-02 vs 2026-06 ─────────────
 
 rating_comp <- players %>% filter(snapshot %in% c("2015-02", "2026-06"))
 
@@ -122,18 +55,6 @@ rating_comp_summary <- rating_comp %>%
   group_by(snapshot) %>%
   summarise(n = n(), mean_rtg = mean(rating), sd_rtg = sd(rating), .groups = "drop")
 print(rating_comp_summary)
-
-# Compare SDs to choose pooled (var.equal=TRUE) vs Welch's t-test.
-# Ratio < 1.2 is treated as "close enough" to equal variance for the
-# pooled formula; otherwise Welch's correction is used.
-sd_ratio <- max(rating_comp_summary$sd_rtg) / min(rating_comp_summary$sd_rtg)
-cat("SD ratio:", round(sd_ratio, 3), "\n")
-
-use_pooled <- sd_ratio < 1.2
-cat("Using", if (use_pooled) "pooled-variance" else "Welch's", "t-test\n")
-
-t_result <- t.test(rating ~ snapshot, data = rating_comp, var.equal = use_pooled)
-print(t_result)
 
 ggplot(rating_comp, aes(rating, fill = snapshot)) +
   geom_histogram(alpha = 0.5, binwidth = 25, position = "identity") +
@@ -151,7 +72,7 @@ ggplot(rating_comp, aes(rating, fill = snapshot)) +
   ) +
   theme_minimal()
 
-# ── 5.6 Player segmentation via k-means ──────────────────────────────────
+# ── 5.3 Player segmentation via k-means ──────────────────────────────────
 
 cluster_data <- period_data %>% filter(!is.na(age))
 cat("Rows used for clustering:", nrow(cluster_data), "of", nrow(period_data),

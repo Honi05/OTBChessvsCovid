@@ -1,85 +1,111 @@
-# Did Over-the-Board Chess Fully Recover After COVID-19?
+# COVID-19 Effects on Slow Thinking Chess
 
-**Course:** Data Management and Analysis — Sapienza University of Rome (Prof. Quattrociocchi)
-**Author:** Honi Arora
+**Did participation in classical over-the-board chess decline following lockdown — and did it ever recover?**
+
+**Author:** Honi Arora · FIDE Master · ID 2162860
+**Course:** Data Management and Analysis (Unit 2) — Sapienza University of Rome
 
 ---
 
-## Research Question
+## The Question
 
-> **Did competitive over-the-board (OTB) chess recover after COVID-19 — and if so, who came back?**
-
-The COVID-19 pandemic forced the cancellation of virtually all in-person tournaments in 2020. At the same time, chess experienced an unprecedented *online* boom (Queen's Gambit effect, Lichess/chess.com growth). But FIDE standard ratings only reflect OTB tournament games — not online play. This project asks whether the real-world tournament ecosystem recovered, stagnated, or transformed — and uses player-level data to find out.
+Chess.com grew from 30 million to 150 million users between 2020 and 2023. Fast online formats exploded. But FIDE standard ratings only count **over-the-board (OTB) tournament games** — 4-hour classical chess played in person. This project asks whether that world collapsed during COVID-19, and whether it has come back.
 
 ---
 
 ## Data
 
-Seven FIDE Standard rating list snapshots (fixed-width `.txt` files, ~1–1.7 M rows each):
+Seven official FIDE Standard Rating List snapshots (fixed-width `.txt` files):
 
-| Snapshot | Period label | Games reflect |
+| Snapshot | Period | Role |
 |---|---|---|
-| Feb 2015 | — (baseline) | Jan 2015 |
-| Jan 2019 | Pre-COVID | Dec 2018 |
-| Jan 2020 | Pre-COVID | Dec 2019 |
-| Jul 2020 | COVID | Jun 2020 |
-| Jan 2021 | COVID | Dec 2020 |
-| Jan 2022 | Post-COVID | Dec 2021 |
-| Jun 2026 | Post-COVID | May 2026 |
+| Feb 2015 | — | Long-run baseline |
+| Jan 2019 | Pre-COVID | |
+| Jan 2020 | Pre-COVID | |
+| Jul 2020 | COVID | |
+| Jan 2021 | COVID | |
+| Jan 2022 | Post-COVID | |
+| Jun 2026 | Post-COVID | |
 
-All raw files are available on [Kaggle](https://www.kaggle.com/honiarora).
+**Raw records:** 2,534,904 across all 7 lists
+**After cleaning** (removed inactive players — zero tournament games in 12+ months): **1,166,786 records × 15 variables**
+
+Raw data available on [Kaggle](https://www.kaggle.com/datasets/honiarora/fide-chess-covid-recovery).
 
 ---
 
 ## Analyses
 
-| Section | Method | Question answered |
-|---|---|---|
-| 5.1 | Descriptive time series | How did active player counts and game participation move over time? |
-| 5.2 | Chi-squared + Cramér's V | Did the probability of playing at least one rated game change across periods? |
-| 5.3 | One-way ANOVA + Tukey HSD + η² | Did the number of games played per player differ significantly across periods? |
-| 5.4 | Multiple linear regression | Controlling for age and title, how much did period predict game volume? |
-| 5.5 | Rating distribution (t-test) | How has the shape of the FIDE player pool shifted from 2015 to 2026? |
-| 5.6 | K-means clustering (k = 4) | What player segments exist, and did their composition shift across periods? |
+| Section | What it answers |
+|---|---|
+| 5.1 Descriptive time series | How did active player counts and participation rates move over time? |
+| 5.2 Rating probability distribution | How did the shape of the FIDE player pool shift from 2015 to 2026? |
+| 5.3 K-means clustering (k = 4) | What player segments exist, and how did their mix change across periods? |
 
 ---
 
-## Key Results
+## Key Findings
 
-- **Participation rate dropped sharply during COVID** (Jul 2020, Jan 2021) and the chi-squared test confirmed this shift is statistically significant (p < 2.2 × 10⁻¹⁶, Cramér's V ≈ 0.08).
-- **Game volume recovered but not fully**: the Post-COVID period shows significantly higher game counts than COVID, but the Tukey test reveals Post-COVID remains below Pre-COVID levels (ANOVA η² ≈ 0.02).
-- **Age and title both matter**: the regression shows titled players played substantially more games, and older players played fewer — independent of period effects.
-- **The player pool has grown and shifted**: by 2026, there are far more active FIDE-rated players than in 2015, with the distribution mean shifting meaningfully (t-test significant, p < 2.2 × 10⁻¹⁶).
-- **Four stable player segments** emerged from k-means: low-rated casual players (largest group), mid-range club players, high-rated active competitors, and elite titled players. The COVID period saw the elite and high-rated segments contract proportionally, while casual players' share held steadier.
+### Participation collapsed — and only partly recovered
+
+The share of active players who played at least one rated OTB game in a given month:
+
+| Period | % played |
+|---|---|
+| Pre-COVID | ~32% |
+| COVID | ~4% |
+| Post-COVID | ~24% |
+
+Chi-squared test: χ² = 90,418 · p < .001 · **Cramer's V = 0.29** — a moderate association between period and participation.
+
+### The pool nearly doubled, but average strength fell
+
+Between 2015 and 2026, the number of active FIDE-rated players grew from **115,546 → 217,459** (~88% growth). But mean rating fell from **1799 → 1737** (SD: 310 → 224) — the new players entering the pool are predominantly lower-rated beginners and club players.
+
+### Four player segments — only one was disrupted by COVID
+
+K-means on rating, monthly games, and age (k = 4) identified four stable groups:
+
+| Cluster | Share | Avg age | Avg rating | Avg games/mo |
+|---|---|---|---|---|
+| Young low-activity | 33% | 19 | 1372 | ~0.3 |
+| Senior low-activity | 28% | 62 | 1673 | ~0.4 |
+| Strong low-activity | 26% | ~49 | 2003 | ~0.7 |
+| Regular players | 14% | ~33 | 1689 | 6.6 |
+
+The **Regular Players** cluster (Cluster 3) dropped to ~2.5% of active players during COVID then rebounded. The other three segments held nearly the same proportional share across all periods.
+
+Chi-squared on cluster × period: χ² = 53,535 · df = 6 · p < .001 · **Cramer's V = 0.16** (weak but significant).
+
+### Bottom line
+
+> OTB chess grew in size, not in engagement. The post-COVID base is larger and more casual than before.
 
 ---
 
 ## Repository Structure
 
 ```
-analysis.R          # Main analysis script (sections 5.1–5.6)
+analysis.R               # Main analysis (sections 5.1–5.3)
 R/
-  clustering.R      # K-means helper (cluster_rank_by_rating)
-  build_dataset.R   # Parses raw FIDE .txt files → data/processed/players.rds
-  parse_fwf.R       # Fixed-width parser for both FIDE file formats
+  clustering.R           # cluster_rank_by_rating helper
+  build_dataset.R        # Parses FIDE .txt files → data/processed/players.rds
+  parse_fwf.R            # Fixed-width parser (handles both FIDE file formats)
   feature_engineering.R
 data/
-  standard_*frl/    # Raw FIDE rating list snapshots (7 folders)
-  processed/        # players.rds (cached, not tracked in git)
-docs/               # Design specs and implementation plans
-DMA2_Presentation.pptx
+  standard_*frl/         # Raw FIDE rating list snapshots (gitignored)
+  processed/             # players.rds cache (gitignored)
+DMA2_Presentation (1).pptx
 ```
-
----
 
 ## How to Run
 
 ```r
-# 1. Build the processed dataset (only needed once)
+# 1. Build the processed dataset (once)
 source("R/build_dataset.R")
 
 # 2. Run the full analysis
 source("analysis.R")
 ```
 
-Requires R ≥ 4.2 with packages: `tidyverse`, `broom`.
+Requires R ≥ 4.2 · packages: `tidyverse`
